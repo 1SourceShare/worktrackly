@@ -45,26 +45,27 @@ const Login = () => {
 
   const createTestUsers = async () => {
     try {
-      // First, sign in as n_matvey@icloud.com
-      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-        email: 'n_matvey@icloud.com',
-        password: 'your_password' // User needs to provide the correct password
-      });
+      // First, get the user data by email
+      const { data: userData, error: userError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', (await supabase.auth.getUser()).data.user?.id)
+        .single();
 
-      if (signInError) throw signInError;
+      if (userError) throw userError;
 
-      if (signInData.user) {
+      if (userData) {
         // Update user role to admin
         const { error: updateError } = await supabase
           .from('profiles')
           .update({ role: 'admin' })
-          .eq('id', signInData.user.id);
+          .eq('id', userData.id);
 
         if (updateError) throw updateError;
 
         toast({
           title: "Роль обновлена",
-          description: "Пользователь n_matvey@icloud.com теперь администратор",
+          description: "Вы теперь администратор",
         });
       }
     } catch (error) {
@@ -112,7 +113,7 @@ const Login = () => {
             onClick={createTestUsers}
             className="w-full"
           >
-            Сделать n_matvey@icloud.com администратором
+            Сделать текущего пользователя администратором
           </Button>
         </div>
       </Card>
