@@ -27,8 +27,7 @@ const AdminDashboard = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("employee_statuses")
-        .select("status")
-        .eq("check_out_time", null);
+        .select("status");
 
       if (error) throw error;
 
