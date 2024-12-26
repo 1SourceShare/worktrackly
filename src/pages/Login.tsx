@@ -4,7 +4,7 @@ import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 
 const Login = () => {
@@ -45,27 +45,28 @@ const Login = () => {
 
   const createTestUsers = async () => {
     try {
-      // Get user by email
-      const { data: { users }, error: getUserError } = await supabase.auth.admin.listUsers();
-      if (getUserError) throw getUserError;
-
-      const user = users.find(u => u.email === 'n_matvey@icloud.com');
-      if (!user) {
-        throw new Error('User not found');
-      }
-
-      // Update user role to admin
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ role: 'admin' })
-        .eq('id', user.id);
-
-      if (updateError) throw updateError;
-
-      toast({
-        title: "Роль обновлена",
-        description: "Пользователь n_matvey@icloud.com теперь администратор",
+      // First, sign in as n_matvey@icloud.com
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        email: 'n_matvey@icloud.com',
+        password: 'your_password' // User needs to provide the correct password
       });
+
+      if (signInError) throw signInError;
+
+      if (signInData.user) {
+        // Update user role to admin
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ role: 'admin' })
+          .eq('id', signInData.user.id);
+
+        if (updateError) throw updateError;
+
+        toast({
+          title: "Роль обновлена",
+          description: "Пользователь n_matvey@icloud.com теперь администратор",
+        });
+      }
     } catch (error) {
       console.error('Error updating user role:', error);
       toast({
