@@ -4,14 +4,39 @@ import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
+import { toast } from "@/components/ui/use-toast";
 
 const Login = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session) {
-        navigate("/");
+        try {
+          // Get user profile to check role
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', session.user.id)
+            .single();
+
+          if (profile?.role === 'admin') {
+            navigate("/admin");
+            toast({
+              title: "Добро пожаловать, администратор!",
+              description: "Вы успешно вошли в систему",
+            });
+          } else {
+            navigate("/");
+            toast({
+              title: "Добро пожаловать!",
+              description: "Вы успешно вошли в систему",
+            });
+          }
+        } catch (error) {
+          console.error('Error fetching user role:', error);
+          navigate("/");
+        }
       }
     });
 
