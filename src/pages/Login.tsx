@@ -45,27 +45,26 @@ const Login = () => {
 
   const createTestUsers = async () => {
     try {
-      // First, get the user data by email
-      const { data: userData, error: userError } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('id', (await supabase.auth.getUser()).data.user?.id)
-        .single();
+      // First, sign in as test1@test.com
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        email: 'test1@test.com',
+        password: '1137ee!!'
+      });
 
-      if (userError) throw userError;
+      if (signInError) throw signInError;
 
-      if (userData) {
+      if (signInData.user) {
         // Update user role to admin
         const { error: updateError } = await supabase
           .from('profiles')
           .update({ role: 'admin' })
-          .eq('id', userData.id);
+          .eq('id', signInData.user.id);
 
         if (updateError) throw updateError;
 
         toast({
           title: "Роль обновлена",
-          description: "Вы теперь администратор",
+          description: "Пользователь test1@test.com теперь администратор",
         });
       }
     } catch (error) {
@@ -113,7 +112,7 @@ const Login = () => {
             onClick={createTestUsers}
             className="w-full"
           >
-            Сделать текущего пользователя администратором
+            Сделать test1@test.com администратором
           </Button>
         </div>
       </Card>
