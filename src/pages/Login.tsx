@@ -45,45 +45,32 @@ const Login = () => {
 
   const createTestUsers = async () => {
     try {
-      // Create admin user
-      const { error: adminError } = await supabase.auth.signUp({
-        email: 'admin@test.com',
-        password: 'admin123',
-      });
+      // Get user by email
+      const { data: { users }, error: getUserError } = await supabase.auth.admin.listUsers();
+      if (getUserError) throw getUserError;
 
-      if (adminError) throw adminError;
-
-      // Create regular user
-      const { error: userError } = await supabase.auth.signUp({
-        email: 'user@test.com',
-        password: 'user123',
-      });
-
-      if (userError) throw userError;
-
-      // Set admin role
-      const { data: adminUser } = await supabase
-        .from('auth')
-        .select('id')
-        .eq('email', 'admin@test.com')
-        .single();
-
-      if (adminUser) {
-        await supabase
-          .from('profiles')
-          .update({ role: 'admin' })
-          .eq('id', adminUser.id);
+      const user = users.find(u => u.email === 'n_matvey@icloud.com');
+      if (!user) {
+        throw new Error('User not found');
       }
 
+      // Update user role to admin
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ role: 'admin' })
+        .eq('id', user.id);
+
+      if (updateError) throw updateError;
+
       toast({
-        title: "Тестовые пользователи созданы",
-        description: "admin@test.com / admin123\nuser@test.com / user123",
+        title: "Роль обновлена",
+        description: "Пользователь n_matvey@icloud.com теперь администратор",
       });
     } catch (error) {
-      console.error('Error creating test users:', error);
+      console.error('Error updating user role:', error);
       toast({
         title: "Ошибка",
-        description: "Не удалось создать тестовых пользователей",
+        description: "Не удалось обновить роль пользователя",
         variant: "destructive",
       });
     }
@@ -124,7 +111,7 @@ const Login = () => {
             onClick={createTestUsers}
             className="w-full"
           >
-            Создать тестовых пользователей
+            Сделать n_matvey@icloud.com администратором
           </Button>
         </div>
       </Card>
